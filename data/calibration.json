@@ -1,0 +1,7 @@
+{
+  "Intel(R) Xeon(R) CPU E5-1650 v4 @ 3.60GHz": {
+    "peak_gflops": 55.90197173907993,
+    "peak_bandwidth_GBps": 10.881713071146148,
+    "l2_cache_bytes": 262144
+  }
+}

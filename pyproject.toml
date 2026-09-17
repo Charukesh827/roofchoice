@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loopcost"
+version = "0.1.0"
+description = "Loop-transformation cost/benefit analysis toolkit combining static heuristics and ML prediction."
+requires-python = ">=3.10"
+dependencies = [
+    "numba>=0.60",
+    "numpy",
+    "islpy",
+    "scikit-learn",
+    "pandas",
+    "matplotlib",
+    "pytest",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+include = ["loopcost*"]
