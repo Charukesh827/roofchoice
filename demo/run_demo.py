@@ -19,8 +19,8 @@ KERNELS_DIR = Path(__file__).resolve().parent / "kernels"
 NJIT_VARIANTS = [
     ("default", False, False),
     ("fastmath", True, False),
-    ("bndchk", False, True),
-    ("fm+bndchk", True, True),
+    ("boundscheck", False, True),
+    ("fastmath+boundscheck", True, True),
 ]
 
 # short display codes for the 6 LLVM variants (keeps the table narrow)
@@ -79,9 +79,6 @@ def _print_static_table(rows):
         ("static AI", 11),
         ("static perf", 14),
         ("bound", 15),
-        ("FLOPs", 8),
-        ("IntOps", 8),
-        ("contig/strd/irr", 18),
         ("loop-dep", 10),
     ]
     header = f"{'kernel':<{name_w}}" + "".join(f"{c:<{w}}" for c, w in cols)
@@ -95,15 +92,11 @@ def _print_static_table(rows):
         if s is None:
             print(f"{r['name']:<{name_w}}(no explicit loop nest found -- excluded from static analysis)")
             continue
-        accesses = f"{s['n_contiguous']}/{s['n_strided']}/{s['n_irregular']}"
         perf = f"{s['static_performance_gflops']:.2f} GFLOP/s"
         cells = (
             f"{_fmt_ai(s):<11}"
             f"{perf:<14}"
             f"{s['bound_label']:<15}"
-            f"{s['float_ops']:<8}"
-            f"{s['int_ops']:<8}"
-            f"{accesses:<18}"
             f"{'yes' if s['has_loop_carried_dep'] else 'no':<10}"
         )
         print(f"{r['name']:<{name_w}}{cells}")

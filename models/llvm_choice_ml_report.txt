@@ -3,22 +3,22 @@ baseline always-numba-default: 96.5% of peak
 baseline always-majority-class (llvm_O3_vec_forcewidth2): 95.5% of peak
 
                model  stratified_acc  loko_acc  loko_pct_of_peak
+    decision_tree_d5        0.355263  0.236842          0.972386
      heuristic_table        0.236842  0.236842          0.970500
-decision_tree_d3_bal        0.342105  0.197368          0.962387
-    decision_tree_d3        0.342105  0.157895          0.953966
-   gradient_boosting        0.315789  0.210526          0.949611
-             hist_gb        0.381579  0.223684          0.946664
-    decision_tree_d5        0.342105  0.144737          0.944870
-         gaussian_nb        0.197368  0.184211          0.942156
-   random_forest_bal        0.368421  0.157895          0.941307
-             svm_rbf        0.250000  0.052632          0.939984
-                knn3        0.250000  0.118421          0.936193
-                knn5        0.223684  0.118421          0.935138
-       random_forest        0.355263  0.131579          0.932453
-          logreg_bal        0.263158  0.171053          0.925753
-              logreg        0.263158  0.144737          0.924759
+   random_forest_bal        0.368421  0.118421          0.963919
+                knn3        0.302632  0.118421          0.963463
+             hist_gb        0.394737  0.184211          0.957281
+       random_forest        0.342105  0.118421          0.953668
+         gaussian_nb        0.236842  0.144737          0.952557
+                knn5        0.250000  0.171053          0.951927
+decision_tree_d3_bal        0.263158  0.171053          0.949964
+          logreg_bal        0.342105  0.157895          0.949265
+    decision_tree_d3        0.394737  0.131579          0.948617
+              logreg        0.328947  0.118421          0.948514
+             svm_rbf        0.315789  0.065789          0.947080
+   gradient_boosting        0.342105  0.105263          0.942207
 
-best trained model: decision_tree_d3_bal
-  leave-one-kernel-out accuracy:   0.197
-  leave-one-kernel-out %-of-peak:  0.962
-  does NOT beat the hand-crafted heuristic_table (96.2% vs 97.1% of peak, held-out kernels) -- with only 19 distinct kernels to learn from, no trained classifier reliably out-generalized the 3-bucket rule it was compared against
+best trained model: decision_tree_d5
+  leave-one-kernel-out accuracy:   0.237
+  leave-one-kernel-out %-of-peak:  0.972
+  beats the hand-crafted heuristic_table (97.2% vs 97.1% of peak, held-out kernels)
