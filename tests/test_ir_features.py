@@ -8,7 +8,7 @@ from numba.core.compiler_machinery import FunctionPass, register_pass
 import numba.core.typed_passes as typed_passes
 
 from loopcost.ir_features.access_pattern import classify_accesses
-from loopcost.ir_features.flops import count_flops
+from loopcost.ir_features.flops import count_flops, count_intops
 from loopcost.ir_features.loop_info import find_loop_nests
 
 _captured = {}
@@ -60,6 +60,11 @@ def strided_2d(a, b):
 def exp_loop(a, c):
     for i in range(10):
         c[i] = a[i] + math.exp(a[i])
+
+
+def int_index_arith(a, c):
+    for i in range(10):
+        c[i] = a[i + 1] + a[2 * i]
 
 
 # --- contiguous_1d: single loop, unit-stride accesses, one float mul per iteration ---
@@ -156,3 +161,21 @@ def test_exp_loop_access_pattern():
     assert len(accesses) == 3  # two reads of a[i], one write to c[i]
     assert all(acc.classification == "contiguous" for acc in accesses)
     assert all(acc.coefficients == {"dim0": 1} for acc in accesses)
+
+
+# --- int_index_arith: constant trip count of 10, integer index arithmetic (i+1, 2*i) ---
+
+
+def test_int_index_arith_counts_integer_ops_separately_from_flops():
+    func_ir, typemap = _compile_and_capture(int_index_arith, (np.arange(20.0), np.zeros(10)))
+    (nest,) = find_loop_nests(func_ir)
+    assert nest.trip_count == 10
+
+    flops = count_flops(nest, func_ir, typemap)
+    # the only float op is the final "+" combining the two loaded array elements
+    assert flops.per_iteration == {"add": 1, "mul": 0, "div": 0, "transcendental": 0}
+
+    intops = count_intops(nest, func_ir, typemap)
+    # "i + 1" is an integer add, "2 * i" is an integer mul -- both index arithmetic, not flops
+    assert intops.per_iteration == {"add": 1, "mul": 1, "div": 0}
+    assert intops.total == {"add": 10, "mul": 10, "div": 0}

@@ -152,9 +152,14 @@ def test_operational_intensity_normal_case():
     assert operational_intensity(500, 2000) == 0.25
 
 
-def test_operational_intensity_guards_against_zero_bytes():
-    assert operational_intensity(100, 0) == 0.0
+def test_operational_intensity_is_infinite_for_zero_bytes_with_real_compute():
+    # zero measured data movement with real flops present is the most compute-bound case
+    # there is (unboundedly so) -- must not be reported as 0.0, which would read as memory-bound
+    assert operational_intensity(100, 0) == float("inf")
+    assert operational_intensity(100, -5) == float("inf")
 
 
-def test_operational_intensity_guards_against_negative_bytes():
-    assert operational_intensity(100, -5) == 0.0
+def test_operational_intensity_is_zero_when_uninformative():
+    # neither bytes nor flops measured: genuinely no information, not a compute-bound claim
+    assert operational_intensity(0, 0) == 0.0
+    assert operational_intensity(None, 0) == 0.0

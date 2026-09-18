@@ -1,0 +1,22 @@
+|--- working_set_bytes <= 55992.00
+|   |--- trip_count <= 2.50
+|   |   |--- working_set_bytes <= 12.00
+|   |   |   |--- class: False
+|   |   |--- working_set_bytes >  12.00
+|   |   |   |--- class: False
+|   |--- trip_count >  2.50
+|   |   |--- oi <= 0.18
+|   |   |   |--- trip_count <= 125.00
+|   |   |   |   |--- class: False
+|   |   |   |--- trip_count >  125.00
+|   |   |   |   |--- class: False
+|   |   |--- oi >  0.18
+|   |   |   |--- oi <= 0.33
+|   |   |   |   |--- class: False
+|   |   |   |--- oi >  0.33
+|   |   |   |   |--- class: False
+|--- working_set_bytes >  55992.00
+|   |--- oi <= 0.15
+|   |   |--- class: True
+|   |--- oi >  0.15
+|   |   |--- class: False

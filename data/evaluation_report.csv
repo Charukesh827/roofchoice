@@ -1,0 +1,4 @@
+kernel,size,time_plain,time_tier1_heuristic,time_tier2_ml,speedup_tier1,speedup_tier2,tier1_applied_transform,tier2_applied_transform,tier1_reason,tier2_reason,agree,tier2_recommended
+binomial_tree_price,SMALL,3.620050847530365e-06,4.067085683345795e-06,3.8817524909973145e-06,0.8900847263567666,0.9325815738963532,,tile,no transform judged profitable,ML model overrides heuristic (confidence=1.00): leaf: predict True,False,True
+black_scholes_grid,SMALL,1.9976869225502014e-06,2.201646566390991e-06,2.3189932107925415e-06,0.9073604060913706,0.8614457831325302,,tile,no transform judged profitable,ML model overrides heuristic (confidence=1.00): leaf: predict True,False,True
+garch_11,SMALL,4.45730984210968e-06,4.888512194156647e-06,4.935078322887421e-06,0.9117927224233188,0.9031892809964144,,tile,no transform judged profitable,ML model overrides heuristic (confidence=1.00): leaf: predict True,False,True

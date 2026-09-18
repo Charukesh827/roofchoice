@@ -80,9 +80,30 @@ def _range_trip_count(start, stop, step):
     return f"ceil(({stop} - {start}) / {step})"
 
 
+def _resolve_effective_header(func_ir, header, max_hops=10):
+    """Follows a chain of trivial `jump`-only blocks from `header` to find the block that
+    actually contains the loop's iternext/branch pattern.
+
+    The CFG's natural-loop analysis identifies a loop's header by dominance, which is not
+    always the block containing the iternext/branch machinery itself -- sometimes (observed
+    on a kernel with an unusually long straight-line body) there's an intervening block that's
+    just an unconditional jump. Following those is always safe: a jump-only block has no
+    other effect, so the block it jumps to is behaviorally the same header.
+    """
+    label = header
+    for _ in range(max_hops):
+        block = func_ir.blocks[label]
+        if len(block.body) == 1 and isinstance(block.body[0], ir.Jump):
+            label = block.body[0].target
+            continue
+        return label
+    return label
+
+
 def _find_for_loop_header_info(func_ir, header):
     """Locates the iternext/pair_first/branch pattern that identifies a for-loop header block."""
-    block = func_ir.blocks[header]
+    effective_header = _resolve_effective_header(func_ir, header)
+    block = func_ir.blocks[effective_header]
     iternext_target = None
     iterator_name = None
     pair_first_target = None
@@ -99,7 +120,7 @@ def _find_for_loop_header_info(func_ir, header):
             body_label = stmt.truebr
     if pair_first_target is None or iterator_name is None or body_label is None:
         return None
-    return iterator_name, pair_first_target, body_label
+    return iterator_name, pair_first_target, body_label, effective_header
 
 
 def _find_induction_var(func_ir, header_label, pair_first_target, body_label):
@@ -167,8 +188,8 @@ def find_loop_nests(func_ir):
         own_bound = None
         trip_counts[header] = "unknown"
         if info is not None:
-            iterator_name, pair_first_target, body_label = info
-            own_var = _find_induction_var(func_ir, header, pair_first_target, body_label)
+            iterator_name, pair_first_target, body_label, effective_header = info
+            own_var = _find_induction_var(func_ir, effective_header, pair_first_target, body_label)
             range_args = _resolve_range_args(func_ir, iterator_name)
             if range_args is not None:
                 trip_counts[header] = _range_trip_count(*range_args)

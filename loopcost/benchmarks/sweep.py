@@ -19,7 +19,7 @@ from loopcost.heuristic.classify import classify_bound, has_loop_carried_depende
 from loopcost.heuristic.ridge_point import get_ridge_point
 from loopcost.ir_features.access_pattern import classify_accesses
 from loopcost.ir_features.cache_model import estimate_bytes_moved, operational_intensity, working_set_bytes
-from loopcost.ir_features.flops import count_flops
+from loopcost.ir_features.flops import count_flops, count_intops, total_ops
 from loopcost.ir_features.loop_info import _int_trip_count, find_loop_nests
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
@@ -149,6 +149,27 @@ def _concretize(loop_nest, arg_values):
     return dataclasses.replace(loop_nest, bounds=new_bounds, trip_count=new_trip_count)
 
 
+def _concretize_access_shapes(access_records, arg_values):
+    """Returns copies of access_records with array_shape filled in from the real call args'
+    actual array shapes, wherever the accessed array is (or aliases) a top-level argument.
+
+    Numba array TYPES never carry a concrete shape (only ndim), so classify_accesses() always
+    leaves this field None -- which makes estimate_bytes_moved()'s fallback path (any
+    non-affine or non-unit-stride access, e.g. any 2D array indexed as arr[i, j] with i from
+    an outer loop) assume every iteration touches a brand-new element instead of the array's
+    real, reused footprint, systematically inflating bytes moved and so misclassifying
+    cache-resident compute-bound kernels (e.g. small dense matmuls) as memory-bound.
+    """
+    resolved = []
+    for access in access_records:
+        if access.array_shape is None:
+            value = arg_values.get(access.array)
+            if value is not None and hasattr(value, "shape"):
+                access = dataclasses.replace(access, array_shape=tuple(value.shape))
+        resolved.append(access)
+    return resolved
+
+
 def _best_effort_trip_count(loop_nest):
     """Numeric trip-count proxy: the concrete value if resolvable, else the product of whichever
     bounds in the chain ARE concrete (skipping any that depend on another loop's live index, e.g.
@@ -165,15 +186,16 @@ def _best_effort_trip_count(loop_nest):
 
 
 def _select_representative(loop_nests, func_ir, typemap):
-    """Picks the loop_nest with the most statically-detected work (flops + accesses), or None."""
+    """Picks the loop_nest with the most statically-detected work (ops + accesses), or None."""
     if not loop_nests:
         return None
 
     def score(loop_nest):
         flops = count_flops(loop_nest, func_ir, typemap)
+        intops = count_intops(loop_nest, func_ir, typemap)
         n_accesses = len(classify_accesses(loop_nest, func_ir, typemap))
-        total_flops = sum(v for v in flops.per_iteration.values())
-        return (total_flops + n_accesses, loop_nest.depth)
+        per_iteration_ops = sum(flops.per_iteration.values()) + sum(intops.per_iteration.values())
+        return (per_iteration_ops + n_accesses, loop_nest.depth)
 
     return max(loop_nests, key=score)
 
@@ -207,8 +229,10 @@ def extract_features(fn, args):
     concrete = _concretize(representative, arg_values)
 
     accesses = classify_accesses(representative, func_ir, typemap)
-    flop_count = count_flops(concrete, func_ir, typemap)
-    total_flops = sum(v for v in flop_count.total.values() if isinstance(v, (int, float)))
+    accesses = _concretize_access_shapes(accesses, arg_values)
+    # AI = (FLOPs + IntOps) / bytes accessed -- total_ops() already weights by the full
+    # enclosing-loop-chain trip count, not just this level's own (see its docstring).
+    total_flops = total_ops(concrete, func_ir, typemap)
 
     bytes_estimate = estimate_bytes_moved(concrete, accesses)
     oi = operational_intensity(total_flops, bytes_estimate.bytes_moved)

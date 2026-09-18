@@ -170,7 +170,14 @@ def estimate_bytes_moved(
 
 
 def operational_intensity(flop_count, bytes_moved):
-    """Returns flop_count / bytes_moved (FLOP/byte), or 0.0 if bytes_moved is zero or negative."""
-    if not bytes_moved or bytes_moved <= 0:
-        return 0.0
+    """Returns flop_count / bytes_moved (FLOP/byte).
+
+    Guards division by zero without conflating two different situations: no measured data
+    movement with real compute present (flop_count > 0) is the most compute-bound case there
+    is -- unboundedly so -- and returns +inf, not 0.0 (which would misclassify it as
+    memory-bound, the opposite conclusion). Only the genuinely uninformative case, where
+    there's neither measured bytes nor measured flops, returns 0.0.
+    """
+    if bytes_moved is None or bytes_moved <= 0:
+        return float("inf") if flop_count and flop_count > 0 else 0.0
     return flop_count / bytes_moved
