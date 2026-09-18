@@ -58,7 +58,7 @@ def run_demo():
         rows.append(
             {"name": name, "style": style, "doc": doc, "suggestions": suggestions, "static": static}
         )
-        print(f"  [{name:24s}] style={style:14s} ({doc.splitlines()[0][:70]})")
+        print(f"  [{name:24s}] done")
 
     _print_static_table(rows)
     _print_table(rows)
