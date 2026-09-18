@@ -1,4 +1,4 @@
-# roofchoice (loopcost)
+# roofpick (loopcost)
 
 Static, roofline-guided cost/benefit analysis for Numba `@njit` kernels: analyze a kernel's
 typed IR *before* it runs, and use that to pick a loop transformation (tiling / vectorization /
